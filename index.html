@@ -1,529 +1,919 @@
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova AI - Chatbot</title>
 
-  <title>Groq AI Chatbot</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-    }
+:root {
+    --bg: #090d18;
+    --panel: #101728;
+    --panel2: #151e32;
+    --text: #f1f5ff;
+    --muted: #8995ad;
+    --border: #25304a;
+    --accent: #8065ff;
+}
 
-    body {
-      background: linear-gradient(135deg, #eef2ff, #f8fafc);
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+}
 
-    .chat-container {
-      width: 420px;
-      height: 650px;
-      max-width: 95%;
-      background: #ffffff;
-      border-radius: 18px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+.app {
+    display: flex;
+    height: 100vh;
+}
 
-    .chat-header {
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
-      color: white;
-      padding: 18px;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-    }
+/* SIDEBAR */
 
-    .status {
-      font-size: 12px;
-      font-weight: normal;
-      margin-top: 5px;
-      opacity: 0.85;
-    }
+.sidebar {
+    width: 270px;
+    background: #0d1322;
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
-    .chat-box {
-      flex: 1;
-      padding: 15px;
-      overflow-y: auto;
-      background: #f8fafc;
-    }
+.logo {
+    font-size: 25px;
+    font-weight: 800;
+    color: white;
+}
 
-    .message-wrapper {
-      display: flex;
-      margin-bottom: 12px;
-    }
+.logo span {
+    color: #9b82ff;
+}
 
-    .message-wrapper.user-wrapper {
-      justify-content: flex-end;
-    }
+.new-chat {
+    padding: 13px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel2);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
 
-    .message-wrapper.bot-wrapper {
-      justify-content: flex-start;
-    }
+.new-chat:hover {
+    background: #252e48;
+}
 
-    .message {
-      max-width: 80%;
-      padding: 11px 14px;
-      border-radius: 14px;
-      line-height: 1.5;
-      font-size: 15px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
+.sidebar-info {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+    margin-top: auto;
+}
 
-    .user {
-      background: #2563eb;
-      color: white;
-      border-bottom-right-radius: 4px;
-    }
+/* MAIN */
 
-    .bot {
-      background: #e5e7eb;
-      color: #111827;
-      border-bottom-left-radius: 4px;
-    }
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
 
-    .typing {
-      color: #6b7280;
-      font-style: italic;
-    }
+.topbar {
+    height: 75px;
+    padding: 15px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+}
 
-    .input-area {
-      display: flex;
-      gap: 8px;
-      padding: 12px;
-      border-top: 1px solid #ddd;
-      background: white;
-    }
+.topbar h2 {
+    font-size: 18px;
+}
 
-    #userInput {
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      outline: none;
-      font-size: 15px;
-    }
+.status {
+    color: #55d99a;
+    font-size: 12px;
+}
 
-    #userInput:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-    }
+.settings-btn {
+    padding: 10px 14px;
+    background: var(--panel2);
+    color: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+}
 
-    button {
-      padding: 12px 18px;
-      border: none;
-      border-radius: 10px;
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
+/* CHAT */
 
-    button:hover {
-      background: #1d4ed8;
-    }
+.chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px 20px;
+    scroll-behavior: smooth;
+}
 
-    button:disabled {
-      background: #9ca3af;
-      cursor: not-allowed;
-    }
+.chat-content {
+    max-width: 850px;
+    margin: auto;
+}
 
-    .error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
+.welcome {
+    text-align: center;
+    margin: 12vh auto 30px;
+}
 
-    @media (max-width: 500px) {
-      body {
-        align-items: stretch;
-      }
+.welcome .robot {
+    font-size: 55px;
+    margin-bottom: 20px;
+}
 
-      .chat-container {
-        width: 100%;
-        max-width: 100%;
-        height: 100vh;
-        border-radius: 0;
-      }
-    }
-  </style>
+.welcome h1 {
+    font-size: 35px;
+    margin-bottom: 12px;
+}
+
+.welcome p {
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.suggestions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    max-width: 650px;
+    margin: 30px auto;
+}
+
+.suggestion {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 17px;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    text-align: left;
+}
+
+.suggestion:hover {
+    border-color: var(--accent);
+    background: var(--panel2);
+}
+
+/* MESSAGES */
+
+.message {
+    display: flex;
+    gap: 13px;
+    margin-bottom: 25px;
+    animation: appear .2s ease;
+}
+
+@keyframes appear {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 11px;
+    background: #252d48;
+    display: grid;
+    place-items: center;
+    font-size: 17px;
+}
+
+.message-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.message-name {
+    font-weight: 700;
+    font-size: 13px;
+    margin: 5px 0 9px;
+}
+
+.message-text {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #dce3f4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.message-actions {
+    margin-top: 10px;
+}
+
+.copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+/* INPUT */
+
+.input-section {
+    padding: 15px 20px 22px;
+}
+
+.input-box {
+    max-width: 850px;
+    margin: auto;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 12px;
+}
+
+textarea {
+    width: 100%;
+    background: transparent;
+    color: white;
+    border: none;
+    outline: none;
+    resize: none;
+    min-height: 50px;
+    max-height: 150px;
+    font-size: 15px;
+    padding: 10px;
+    font-family: inherit;
+}
+
+.input-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.model-select {
+    background: var(--panel2);
+    color: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px;
+    max-width: 230px;
+    outline: none;
+}
+
+.send-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 11px 20px;
+    border-radius: 9px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.send-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.disclaimer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 12px;
+}
+
+/* SETTINGS MODAL */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000b;
+    z-index: 10;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-box {
+    width: 100%;
+    max-width: 430px;
+    background: #121b2d;
+    border: 1px solid var(--border);
+    border-radius: 17px;
+    padding: 25px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.field {
+    margin-bottom: 18px;
+}
+
+.field label {
+    display: block;
+    margin-bottom: 9px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.field input, .field select {
+    width: 100%;
+    padding: 13px;
+    background: #0b1221;
+    color: white;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    outline: none;
+}
+
+.key-row {
+    display: flex;
+    gap: 8px;
+}
+
+.key-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.key-row button {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: white;
+    border-radius: 8px;
+    padding: 0 12px;
+    cursor: pointer;
+}
+
+.save-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 9px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.help {
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-top: 15px;
+}
+
+.typing {
+    color: #9b82ff;
+    font-size: 13px;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    to { opacity: .4; }
+}
+
+@media(max-width:650px) {
+    .sidebar { display: none; }
+    .topbar { padding: 12px 15px; }
+    .welcome h1 { font-size: 26px; }
+    .suggestions { grid-template-columns: 1fr; }
+    .chat-area { padding: 20px 13px; }
+    .input-section { padding: 10px; }
+    .model-select { max-width: 170px; font-size: 11px; }
+}
+</style>
 </head>
 
 <body>
 
-  <div class="chat-container">
+<div class="app">
 
-    <div class="chat-header">
-      🤖 Groq AI Chatbot
-      <div class="status">Powered by Groq</div>
-    </div>
+    <aside class="sidebar">
+        <div class="logo">✦ Nova<span>AI</span></div>
 
-    <div class="chat-box" id="chatBox">
+        <button class="new-chat" onclick="newChat()">
+            ＋ New Chat
+        </button>
 
-      <div class="message-wrapper bot-wrapper">
-        <div class="message bot">
-          Hello! 👋 Main Groq AI chatbot hoon. Aap mujhse kuch bhi pooch sakte hain.
+        <button class="new-chat" onclick="openSettings()">
+            ⚙ API Settings
+        </button>
+
+        <div class="sidebar-info">
+            <b>Nova AI Chatbot</b><br>
+            Powered by Groq API<br><br>
+            GPT-OSS + Llama Models<br>
+            Version 1.0
         </div>
-      </div>
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+            <h2>✦ Nova AI</h2>
+            <div style="display:flex;align-items:center;gap:15px">
+                <span class="status">● Ready</span>
+                <button class="settings-btn" onclick="openSettings()">
+                    ⚙ Settings
+                </button>
+            </div>
+        </header>
+
+        <section class="chat-area" id="chatArea">
+            <div class="chat-content" id="chatContent">
+
+                <div class="welcome" id="welcome">
+                    <div class="robot">✦</div>
+                    <h1>Welcome to Nova AI</h1>
+                    <p>Your intelligent AI assistant.<br>
+                    Ask anything and start a conversation.</p>
+                </div>
+
+                <div class="suggestions" id="suggestions">
+                    <button class="suggestion"
+                    onclick="useSuggestion('Explain artificial intelligence simply')">
+                        🤖 Explain AI
+                    </button>
+
+                    <button class="suggestion"
+                    onclick="useSuggestion('Write a simple HTML website')">
+                        💻 Write Code
+                    </button>
+
+                    <button class="suggestion"
+                    onclick="useSuggestion('Tell me interesting science facts')">
+                        🌎 Science Facts
+                    </button>
+
+                    <button class="suggestion"
+                    onclick="useSuggestion('Help me learn programming')">
+                        📚 Learn Programming
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <footer class="input-section">
+            <div class="input-box">
+
+                <textarea id="userInput"
+                placeholder="Message Nova AI..."
+                rows="1"></textarea>
+
+                <div class="input-bottom">
+
+                    <select class="model-select" id="modelSelect">
+                        <optgroup label="GPT-OSS Models">
+                            <option value="openai/gpt-oss-20b">
+                                GPT-OSS 20B
+                            </option>
+                            <option value="openai/gpt-oss-120b">
+                                GPT-OSS 120B
+                            </option>
+                        </optgroup>
+
+                        <optgroup label="Llama Models">
+                            <option value="llama-3.3-70b-versatile">
+                                Llama 3.3 70B
+                            </option>
+                            <option value="llama-3.1-8b-instant">
+                                Llama 3.1 8B
+                            </option>
+                        </optgroup>
+                    </select>
+
+                    <button class="send-btn" id="sendBtn"
+                    onclick="sendMessage()">
+                        Send ➤
+                    </button>
+
+                </div>
+            </div>
+
+            <div class="disclaimer">
+                AI can make mistakes. Verify important information.
+            </div>
+        </footer>
+
+    </main>
+</div>
+
+<!-- SETTINGS MODAL -->
+
+<div class="modal" id="settingsModal">
+    <div class="modal-box">
+
+        <div class="modal-header">
+            <h2>⚙ API Settings</h2>
+            <button class="close-btn" onclick="closeSettings()">×</button>
+        </div>
+
+        <div class="field">
+            <label>Groq API Key</label>
+
+            <div class="key-row">
+                <input type="password" id="apiKey"
+                placeholder="Enter your Groq API Key"
+                autocomplete="off">
+
+                <button onclick="toggleKey()">Show</button>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Select AI Model</label>
+
+            <select id="settingsModel">
+                <optgroup label="GPT-OSS">
+                    <option value="openai/gpt-oss-20b">GPT-OSS 20B</option>
+                    <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
+                </optgroup>
+
+                <optgroup label="Llama">
+                    <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+                    <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <button class="save-btn" onclick="saveSettings()">
+            Save Settings
+        </button>
+
+        <div class="help">
+            Your API key stays in this page's JavaScript memory.
+            It is not saved in localStorage or cookies. Reloading
+            the page clears it. Never share your API key or publish
+            it in your GitHub repository. Direct browser API calls
+            are not recommended for public websites.
+        </div>
 
     </div>
+</div>
 
-    <div class="input-area">
+<script>
 
-      <input
-        type="text"
-        id="userInput"
-        placeholder="Type your message..."
-        autocomplete="off"
-      >
+/* CONFIGURATION */
 
-      <button id="sendButton" onclick="sendMessage()">
-        Send
-      </button>
+const API_URL =
+"https://api.groq.com/openai/v1/chat/completions";
 
-    </div>
+let apiKey = "";
+let conversation = [];
+let isLoading = false;
 
-  </div>
+const input = document.getElementById("userInput");
+const sendBtn = document.getElementById("sendBtn");
+const chatContent = document.getElementById("chatContent");
+const chatArea = document.getElementById("chatArea");
+const modelSelect = document.getElementById("modelSelect");
 
+/* SETTINGS */
 
-  <script>
+function openSettings() {
+    document.getElementById("settingsModal")
+    .classList.add("active");
 
-    /*
-      =====================================================
-      GROQ API KEY
-      =====================================================
+    document.getElementById("settingsModel").value =
+    modelSelect.value;
 
-      Yahan apni NEW Groq API key paste karo.
+    document.getElementById("apiKey").value = apiKey;
+}
 
-      Example:
+function closeSettings() {
+    document.getElementById("settingsModal")
+    .classList.remove("active");
+}
 
-      const GROQ_API_KEY = "gsk_xxxxxxxxxxxxxxxxx";
+function toggleKey() {
+    const field = document.getElementById("apiKey");
 
-      IMPORTANT:
-      Browser/frontend mein API key rakhna production ke liye
-      secure nahi hai.
+    field.type =
+    field.type === "password" ? "text" : "password";
+}
 
-      Production website ke liye backend/server use karo.
-    */
+function saveSettings() {
 
-    const GROQ_API_KEY = "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";
+    const key = document.getElementById("apiKey").value.trim();
 
-
-    /*
-      Groq Chat Completions API
-    */
-
-    const GROQ_API_URL =
-      "https://api.groq.com/openai/v1/chat/completions";
-
-
-    /*
-      Current conversation history
-    */
-
-    let conversation = [
-      {
-        role: "system",
-        content:
-          "You are a helpful, friendly and intelligent AI assistant. " +
-          "Answer clearly and concisely. " +
-          "You can understand Hindi, Hinglish and English. " +
-          "If the user speaks Hindi or Hinglish, respond naturally in Hindi/Hinglish."
-      }
-    ];
-
-
-    const input = document.getElementById("userInput");
-    const chatBox = document.getElementById("chatBox");
-    const sendButton = document.getElementById("sendButton");
-
-
-    /*
-      Add message to UI
-    */
-
-    function addMessage(text, type, extraClass = "") {
-
-      const wrapper = document.createElement("div");
-
-      wrapper.classList.add(
-        "message-wrapper",
-        type === "user" ? "user-wrapper" : "bot-wrapper"
-      );
-
-      const messageDiv = document.createElement("div");
-
-      messageDiv.classList.add(
-        "message",
-        type,
-        extraClass
-      );
-
-      messageDiv.textContent = text;
-
-      wrapper.appendChild(messageDiv);
-      chatBox.appendChild(wrapper);
-
-      scrollToBottom();
-
-      return messageDiv;
+    if (!key) {
+        alert("Please enter your Groq API Key.");
+        return;
     }
 
+    apiKey = key;
 
-    /*
-      Scroll chat to bottom
-    */
+    modelSelect.value =
+    document.getElementById("settingsModel").value;
 
-    function scrollToBottom() {
-      chatBox.scrollTop = chatBox.scrollHeight;
+    closeSettings();
+
+    alert("Settings applied for this page session!");
+}
+
+/* MODEL CHANGE */
+
+modelSelect.addEventListener("change", () => {
+    document.getElementById("settingsModel").value =
+    modelSelect.value;
+});
+
+/* NEW CHAT */
+
+function newChat() {
+
+    if (isLoading) return;
+
+    conversation = [];
+
+    chatContent.innerHTML = `
+        <div class="welcome" id="welcome">
+            <div class="robot">✦</div>
+            <h1>Welcome to Nova AI</h1>
+            <p>Your intelligent AI assistant.<br>
+            Ask anything and start a conversation.</p>
+        </div>
+
+        <div class="suggestions" id="suggestions">
+            <button class="suggestion"
+            onclick="useSuggestion('Explain artificial intelligence simply')">
+                🤖 Explain AI
+            </button>
+
+            <button class="suggestion"
+            onclick="useSuggestion('Write a simple HTML website')">
+                💻 Write Code
+            </button>
+
+            <button class="suggestion"
+            onclick="useSuggestion('Tell me interesting science facts')">
+                🌎 Science Facts
+            </button>
+
+            <button class="suggestion"
+            onclick="useSuggestion('Help me learn programming')">
+                📚 Learn Programming
+            </button>
+        </div>
+    `;
+}
+
+/* SUGGESTIONS */
+
+function useSuggestion(text) {
+    input.value = text;
+    sendMessage();
+}
+
+/* ADD MESSAGE */
+
+function addMessage(role, text) {
+
+    const message = document.createElement("div");
+    message.className = "message";
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = role === "user" ? "👤" : "✦";
+
+    const body = document.createElement("div");
+    body.className = "message-body";
+
+    const name = document.createElement("div");
+    name.className = "message-name";
+    name.textContent = role === "user" ? "You" : "Nova AI";
+
+    const content = document.createElement("div");
+    content.className = "message-text";
+    content.textContent = text;
+
+    body.appendChild(name);
+    body.appendChild(content);
+
+    if (role === "assistant") {
+
+        const actions = document.createElement("div");
+        actions.className = "message-actions";
+
+        const copy = document.createElement("button");
+        copy.className = "copy-btn";
+        copy.textContent = "📋 Copy";
+
+        copy.onclick = async () => {
+            try {
+                await navigator.clipboard.writeText(text);
+                copy.textContent = "Copied!";
+            } catch {
+                copy.textContent = "Copy unavailable";
+            }
+        };
+
+        actions.appendChild(copy);
+        body.appendChild(actions);
     }
 
+    message.appendChild(avatar);
+    message.appendChild(body);
 
-    /*
-      Send message
-    */
+    chatContent.appendChild(message);
 
-    async function sendMessage() {
+    scrollToBottom();
+}
 
-      const message = input.value.trim();
+/* LOADING */
 
-      if (!message) {
+function showTyping() {
+
+    const typing = document.createElement("div");
+
+    typing.id = "typing";
+    typing.className = "typing";
+    typing.textContent = "✦ Nova AI is thinking...";
+
+    chatContent.appendChild(typing);
+
+    scrollToBottom();
+}
+
+function hideTyping() {
+    const typing = document.getElementById("typing");
+    if (typing) typing.remove();
+}
+
+function scrollToBottom() {
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+/* SEND MESSAGE */
+
+async function sendMessage() {
+
+    if (isLoading) return;
+
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    if (!apiKey) {
+        openSettings();
+        alert("Please add your Groq API Key first.");
         return;
-      }
+    }
 
+    isLoading = true;
+    sendBtn.disabled = true;
 
-      /*
-        API key check
-      */
+    const model = modelSelect.value;
 
-      if (
-        !GROQ_API_KEY ||
-        GROQ_API_KEY === "PASTE_YOUR_NEW_GROQ_API_KEY_HERE"
-      ) {
+    document.getElementById("welcome")?.remove();
+    document.getElementById("suggestions")?.remove();
 
-        addMessage(
-          "⚠️ Please apni Groq API key code mein add karein.",
-          "bot",
-          "error"
-        );
+    input.value = "";
 
-        return;
-      }
+    addMessage("user", text);
 
-
-      /*
-        Show user message
-      */
-
-      addMessage(message, "user");
-
-      input.value = "";
-
-      input.disabled = true;
-      sendButton.disabled = true;
-      sendButton.textContent = "...";
-
-
-      /*
-        Add user message to conversation
-      */
-
-      conversation.push({
+    conversation.push({
         role: "user",
-        content: message
-      });
+        content: text
+    });
 
+    showTyping();
 
-      /*
-        Typing indicator
-      */
+    try {
 
-      const typingMessage = addMessage(
-        "🤖 Thinking...",
-        "bot",
-        "typing"
-      );
+        const response = await fetch(API_URL, {
 
+            method: "POST",
 
-      try {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + apiKey
+            },
 
-        const response = await fetch(GROQ_API_URL, {
+            body: JSON.stringify({
 
-          method: "POST",
+                model: model,
 
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + GROQ_API_KEY
-          },
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are Nova AI, a helpful and friendly AI assistant. Answer clearly and accurately. Match the user's language."
+                    },
+                    ...conversation
+                ],
 
-          body: JSON.stringify({
+                temperature: 0.7,
+                max_completion_tokens: 2048
 
-            /*
-              Groq model
-            */
-
-            model: "llama-3.3-70b-versatile",
-
-            /*
-              Conversation history
-            */
-
-            messages: conversation,
-
-            /*
-              Maximum generated tokens
-            */
-
-            max_completion_tokens: 1024,
-
-            /*
-              Creativity
-            */
-
-            temperature: 0.7,
-
-            /*
-              Normal non-streaming response
-            */
-
-            stream: false
-
-          })
+            })
 
         });
-
-
-        /*
-          Convert response to JSON
-        */
 
         const data = await response.json();
 
-
-        /*
-          Handle API errors
-        */
-
         if (!response.ok) {
-
-          console.error("Groq API Error:", data);
-
-          throw new Error(
-            data?.error?.message ||
-            "Groq API request failed."
-          );
+            throw new Error(
+                data.error?.message ||
+                "API request failed: " + response.status
+            );
         }
 
+        const answer =
+        data.choices?.[0]?.message?.content;
 
-        /*
-          Get AI response
-        */
-
-        const botResponse =
-          data?.choices?.[0]?.message?.content;
-
-
-        if (!botResponse) {
-
-          throw new Error(
-            "AI ne koi response return nahi kiya."
-          );
+        if (!answer) {
+            throw new Error("No response received from AI.");
         }
-
-
-        /*
-          Remove typing indicator
-        */
-
-        typingMessage.parentElement.remove();
-
-
-        /*
-          Show AI response
-        */
-
-        addMessage(botResponse, "bot");
-
-
-        /*
-          Save AI response to conversation
-        */
 
         conversation.push({
-          role: "assistant",
-          content: botResponse
+            role: "assistant",
+            content: answer
         });
 
+        hideTyping();
 
-      } catch (error) {
+        addMessage("assistant", answer);
 
-        console.error(error);
+    } catch (error) {
 
-        /*
-          Remove typing indicator
-        */
-
-        if (
-          typingMessage &&
-          typingMessage.parentElement
-        ) {
-          typingMessage.parentElement.remove();
-        }
-
-
-        /*
-          Show error
-        */
+        hideTyping();
 
         addMessage(
-          "❌ Error: " + error.message,
-          "bot",
-          "error"
+            "assistant",
+            "⚠️ Error: " + error.message +
+            "\n\nPlease check your API key, model selection, internet connection and Groq API availability."
         );
 
-      } finally {
+        conversation.pop();
 
-        input.disabled = false;
-        sendButton.disabled = false;
-        sendButton.textContent = "Send";
+    } finally {
 
+        isLoading = false;
+        sendBtn.disabled = false;
         input.focus();
 
-      }
+    }
+}
+
+/* ENTER TO SEND */
+
+input.addEventListener("keydown", function(event) {
+
+    if (event.key === "Enter" && !event.shiftKey) {
+
+        event.preventDefault();
+        sendMessage();
 
     }
 
+});
 
-    /*
-      Enter key support
-    */
+/* AUTO RESIZE */
 
-    input.addEventListener(
-      "keydown",
-      function(event) {
+input.addEventListener("input", function() {
 
-        if (event.key === "Enter") {
+    this.style.height = "auto";
 
-          event.preventDefault();
+    this.style.height =
+    Math.min(this.scrollHeight, 150) + "px";
 
-          sendMessage();
+});
 
-        }
-
-      }
-    );
-
-
-  </script>
+</script>
 
 </body>
 </html>
